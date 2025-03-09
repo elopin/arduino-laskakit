@@ -1,72 +1,39 @@
-#include <LiquidCrystal_I2C.h>
-#include <RtcDS1302.h>
-#include <TimeLib.h>
-#include <Wire.h>
+#include <LiquidCrystal_I2C.h> // lib for LCD with I2C interface
+#include <Wire.h>              // lib for I2C interface
+#include <RtcDS1302.h>         // lib for Real Time Clock based on DS1302
+#include <TimeLib.h>           // lib for Time and Date functions
 
-ThreeWire myWire(3, 4, 2);  // IO, SCLK, CE
-RtcDS1302<ThreeWire> Rtc(myWire);
 
-LiquidCrystal_I2C lcd(0x27, 16, 2);
+ThreeWire myWire(3, 4, 2);          // define I2C with IO = data, SCLK = clock interval, CE = reset
+RtcDS1302<ThreeWire> Rtc(myWire);   // define RTC device with I2C settings
+LiquidCrystal_I2C lcd(0x27, 16, 2); // define LCD device with (address, row length, row count)
 
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(9600); 
 
-  lcd.init();
-  lcd.backlight();
+  lcd.init();      // init lcd
+  lcd.backlight(); // turn baklight on
 
-  Rtc.Begin();
-  Rtc.SetDateTime(RtcDateTime(__DATE__, __TIME__));
-  if (!Rtc.GetIsRunning()) {
-    Serial.println("RTC is NOT running!");
-    // following line sets the RTC to the date & time this sketch was compiled
-    Rtc.SetDateTime(RtcDateTime(__DATE__, __TIME__));
-  }
-
-  lcd.print("RTC aktivovan");
+  Rtc.Begin();                                      // init RTC
+  Rtc.SetDateTime(RtcDateTime(__DATE__, __TIME__)); // set date and time of this sketch compilation
+  
+  lcd.print("RTC active");
   delay(500);
   lcd.clear();
 
-  setSyncProvider(getSyncProvider);
-  setSyncInterval(5);
+  setSyncProvider(getSyncProvider);  // define datetime provider for TimeLib, must be function returning time_t
+  setSyncInterval(5);                // every five second will TimeLib update its internal datetime   
   Serial.print("TimeLib Synced");
 }
 
+// RTC datetime provider for TimeLib
 time_t getSyncProvider() {
   return Rtc.GetDateTime().Unix64Time();
 }
 
 void loop() {
 
-
-  Serial.println("RCT Times: ");
-  time_t unixTime = Rtc.GetDateTime().TotalSeconds64() + c_UnixEpoch32;
-  Serial.println(unixTime);
-  unsigned long unix64time = Rtc.GetDateTime().Unix64Time();
-  Serial.println(unixTime);
-  Serial.println(Rtc.GetDateTime().Day());
-  Serial.println(Rtc.GetDateTime().Month());
-  Serial.println(Rtc.GetDateTime().Year());
-
-  Serial.println("--------------------");
-  Serial.println("From TimeLib Day: ");
-  Serial.println(dayStr(weekday()));
-  Serial.println(day());
-  Serial.println(month());
-  Serial.println(year());
-  Serial.println(now());
-  Serial.println("--------------------");
-
-  tmElements_t te;
-  breakTime(unixTime, te);
-
-  Serial.println("Time from elements:");
-  Serial.println(te.Day);
-  Serial.println(te.Month);
-  Serial.println(tmYearToCalendar(te.Year));
-  Serial.println("---------------------");
-
-
-  // zobrazit čas na displeji
+  // show time on first line
   lcd.setCursor(3, 0);
   print2digits(hour());
   lcd.print(":");
@@ -74,11 +41,11 @@ void loop() {
   lcd.print(":");
   print2digits(second());
 
-  // zobrazit den v týdnu
+  // show short day of week on second line
   lcd.setCursor(0, 1);
   lcd.print(dayShortStr(weekday()));
 
-  // zobrazit datum
+  // show date on second line
   lcd.setCursor(5, 1);
   lcd.print(" ");
   print2digits(day());
@@ -92,7 +59,7 @@ void loop() {
 
 
 void print2digits(int number) {
-  // přidaní "0" u čísel do 10
+  // add zero before 0 - 9
   if (number >= 0 && number < 10) {
     lcd.write('0');
   }

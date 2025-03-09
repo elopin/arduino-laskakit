@@ -1,24 +1,23 @@
-#include <LiquidCrystal_I2C.h>
-#include <RtcDS1302.h>
-#include <DateTimeFunctions.h>
-#include <Wire.h>
+#include <LiquidCrystal_I2C.h> // lib for LCD with I2C interface
+#include <Wire.h>              // lib for I2C interface
+#include <RtcDS1302.h>         // lib for Real Time Clock based on DS1302
+#include <DateTimeFunctions.h> // lib for Time and Date functions
 
-ThreeWire myWire(3, 4, 2);  // IO, SCLK, CE
-RtcDS1302<ThreeWire> Rtc(myWire);
+ThreeWire myWire(3, 4, 2);          // define I2C with IO = data, SCLK = clock interval, CE = reset
+RtcDS1302<ThreeWire> Rtc(myWire);   // define RTC device with I2C settings
+LiquidCrystal_I2C lcd(0x27, 16, 2); // define LCD device with (address, row length, row count)
 
-LiquidCrystal_I2C lcd(0x27, 16, 2);
-
-DateTimeFunctions dtf;
+DateTimeFunctions dtf;  // define object for date and time functions
 
 void setup() {
   Serial.begin(9600);
 
-  lcd.init();
-  lcd.backlight();
+  lcd.init();      // init lcd
+  lcd.backlight(); // turn baklight on
 
-  Rtc.Begin();
-  RtcDateTime compiled = RtcDateTime(__DATE__, __TIME__);
-  Rtc.SetDateTime(compiled);
+  Rtc.Begin();                                      // init RTC
+  Rtc.SetDateTime(RtcDateTime(__DATE__, __TIME__)); // set date and time of this sketch compilation
+
   lcd.print("RTC aktivovan");
   delay(500);
   lcd.clear();
@@ -27,10 +26,10 @@ void setup() {
 
 void loop() {
 
-  
+  // get datetime from RTC
   RtcDateTime rtc = Rtc.GetDateTime();
   
-  // zobrazit čas na displeji
+  // show time on first line
   lcd.setCursor(3, 0);
   print2digits(rtc.Hour());
   lcd.print(":");
@@ -38,11 +37,11 @@ void loop() {
   lcd.print(":");
   print2digits(rtc.Second());
 
-  // zobrazit den v týdnu
+  // show short day of week on second line
   lcd.setCursor(0, 1);
   lcd.print(dtf.getDOWNS(rtc.DayOfWeek()));
 
-  // zobrazit datum
+  // show date on second line
   lcd.setCursor(5, 1);
   lcd.print(" ");
   print2digits(rtc.Day());
@@ -56,7 +55,7 @@ void loop() {
 
  
 void print2digits(int number ) { 
- // přidaní "0" u čísel do 10 
+ // add zero before 0 - 9
  if (number >= 0 && number < 10) { 
   lcd.write('0'); 
  } 
